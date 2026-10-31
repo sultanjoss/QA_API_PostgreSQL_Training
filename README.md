@@ -134,3 +134,8 @@ Perintah `down -v` **menghapus data di volume training** dan akan mengembalikan 
 - `balance` dan `amount` memakai integer (unit nominal lab), bukan floating point. PostgreSQL BIGINT dikirim sebagai **string** dalam JSON untuk menghindari kehilangan presisi di JavaScript.
 - Tidak ada autentikasi: lab ini fokus API + DB, bukan keamanan production.
 - Klaim kebenaran test baru valid setelah kamu menjalankannya di Docker milikmu. File paket divalidasi sintaksnya tetapi container belum dieksekusi dalam sesi ini.
+
+## Jenkins CI/CD Trigger Validation
+
+This repository supports staging SCM polling, nightly regression,
+and manual parameterized execution through Jenkins.
