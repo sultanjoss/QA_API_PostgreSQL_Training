@@ -1,0 +1,42 @@
+name: qa-api-postgresql-training
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qa_training_db
+      POSTGRES_USER: qa_training
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Isi DB_PASSWORD di file .env}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - qa_training_postgres:/var/lib/postgresql/data
+      - ./db/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/02_seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qa_training -d qa_training_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  api:
+    build: ./api
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: qa_training_db
+      PGUSER: qa_training
+      PGPASSWORD: ${DB_PASSWORD:?Isi DB_PASSWORD di file .env}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+volumes:
+  qa_training_postgres:

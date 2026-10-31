@@ -1,0 +1,40 @@
+{
+  "name": "qa_api_postgresql_training",
+  "version": "1.0.0",
+  "description": "**Sistem yang diuji (SUT)**: REST API Express + PostgreSQL. Ini **bukan framework automation**; nantinya dites dari repository `APIDatabaseAutomationTesting` menggunakan Axios + Mocha + `pg`. Tidak memodifikasi project `MobileAutomationTesting` atau container ReportPortal.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:integration": "node --env-file=.env --import tsx ./node_modules/mocha/bin/mocha.js \"automation/src/tests/integration/**/*.spec.ts\" --reporter spec",
+    "test:api": "node --env-file=.env --import tsx ./node_modules/mocha/bin/mocha.js \"automation/src/tests/api/**/*.spec.ts\" --reporter spec",
+    "test:db": "node --env-file=.env --import tsx ./node_modules/mocha/bin/mocha.js \"automation/src/tests/database/**/*.spec.ts\" --reporter spec",
+    "test:all": "node --env-file=.env --import tsx ./node_modules/mocha/bin/mocha.js \"automation/src/tests/**/*.spec.ts\" --reporter spec",
+    "test:report": "node --env-file=.env --import tsx ./node_modules/mocha/bin/mocha.js --file automation/src/setup/database.hooks.ts \"automation/src/tests/integration/**/*.spec.ts\" --reporter mochawesome --reporter-options reportDir=automation/reports/mochawesome,reportFilename=regression-report,html=true,json=true,overwrite=true",
+    "test:rp": "RP_TESTING=true node --env-file=.env --import tsx ./node_modules/mocha/bin/mocha.js --config ./automation/reportportal.mocharc.cjs",
+    "test:all-report": "node --env-file=.env --import tsx ./automation/run-dual-report.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.21.0",
+    "chai": "^6.3.0",
+    "dotenv": "^18.0.9",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@reportportal/agent-js-mocha": "^5.1.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "mocha": "^12.0.3",
+    "mocha-multi-reporters": "^1.5.2",
+    "mochawesome": "^8.1.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

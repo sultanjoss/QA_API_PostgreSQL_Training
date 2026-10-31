@@ -1,0 +1,31 @@
+﻿Level,Test Case ID,Scenario,Expected API,Expected PostgreSQL
+BASIC,TC-API-001,GET /health,200 + DB CONNECTED,Tidak ada perubahan DB
+BASIC,TC-API-002,GET customers pagination,200 + pagination benar,SELECT count sesuai filter
+BASIC,TC-API-003,POST customer valid,201 + JSON + Location,customers INSERT 1 record
+BASIC,TC-API-004,POST nama kosong,400 REQUIRED_FIELDS,customers tidak bertambah
+BASIC,TC-API-005,POST email invalid,422 INVALID_CUSTOMER,customers tidak bertambah
+BASIC,TC-API-006,POST email duplicate,409 DUPLICATE_EMAIL,UNIQUE constraint terjaga
+BASIC,TC-API-007,GET customer valid,200 body sesuai,SELECT id cocok
+BASIC,TC-API-008,GET unknown customer,404 NOT_FOUND,Tidak ada record
+BASIC,TC-API-009,PUT customer valid,200 nilai updated,SELECT name/email berubah
+BASIC,TC-API-010,PATCH status suspended,200 SUSPENDED,status DB SUSPENDED
+BASIC,TC-API-011,DELETE customer tanpa account,204 tanpa body,record terhapus
+BASIC,TC-API-012,Validasi header content-type/x-request-id,Header sesuai kontrak,N/A
+BASIC,TC-API-013,Validasi response time,<3000ms contoh SLA,N/A
+BASIC,TC-API-014,Invalid page/limit,400 INVALID_PAGINATION,N/A
+BASIC,TC-API-015,Search/filter status,200 hasil sesuai filter,SELECT filtered cocok
+INTERMEDIATE,TC-DB-001,Create account aktif,201 + account_number,accounts INSERT dengan FK customer
+INTERMEDIATE,TC-DB-002,Create account inactive,422 CUSTOMER_NOT_ACTIVE,accounts tidak bertambah
+INTERMEDIATE,TC-DB-003,Delete customer punya account,409 CUSTOMER_HAS_ACCOUNTS,customer + account tetap
+INTERMEDIATE,TC-DB-004,GET account valid,200 body cocok,SELECT balance/status cocok
+INTERMEDIATE,TC-DB-005,List accounts by customer,200 data array,SELECT FK customer_id cocok
+INTERMEDIATE,TC-INT-001,Transfer valid,201 replayed false,"2 saldo berubah, transfer + audit INSERT"
+INTERMEDIATE,TC-INT-002,Transfer insufficient funds,422 INSUFFICIENT_FUNDS,saldo + transfer tidak berubah
+INTERMEDIATE,TC-INT-003,Transfer same account,422 INVALID_TRANSFER,tidak ada perubahan
+INTERMEDIATE,TC-INT-004,Transfer frozen account,422 ACCOUNT_NOT_ACTIVE,tidak ada perubahan
+INTERMEDIATE,TC-INT-005,Replay idempotency key same payload,200 replayed true,saldo tidak didebit dua kali
+INTERMEDIATE,TC-INT-006,Reuse idempotency key changed payload,409 IDEMPOTENCY_CONFLICT,tidak ada transfer baru
+INTERMEDIATE,TC-INT-007,GET transfer by ID,200 transfer detail,SELECT transfer sesuai
+INTERMEDIATE,TC-INT-008,Validasi audit log create customer,201 API create,audit_logs CREATE tersedia
+INTERMEDIATE,TC-INT-009,Validasi rollback transaksi gagal,422 transfer invalid,jumlah/saldo tidak berubah
+INTERMEDIATE,TC-INT-010,Transfer paralel saldo terbatas,Hanya transfer yang didukung saldo sukses,balance nonnegative dan konsisten
