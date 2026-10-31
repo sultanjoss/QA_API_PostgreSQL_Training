@@ -100,16 +100,16 @@ const mocha = new Mocha({
 
     reporterOptions: {
 
-        // ==========================================
+        // ==============================================
         // DUAL REPORTER CONFIGURATION
-        // ==========================================
+        // ==============================================
 
         reporterEnabled:
             'mochawesome, @reportportal/agent-js-mocha',
 
-        // ==========================================
-        // MOCHAWESOME
-        // ==========================================
+        // ==============================================
+        // MOCHAWESOME CONFIGURATION
+        // ==============================================
 
         mochawesomeReporterOptions: {
             reportDir: reportDirectory,
@@ -120,9 +120,9 @@ const mocha = new Mocha({
             quiet: false
         },
 
-        // ==========================================
-        // REPORTPORTAL
-        // ==========================================
+        // ==============================================
+        // REPORTPORTAL CONFIGURATION
+        // ==============================================
 
         reportportalAgentJsMochaReporterOptions: {
             endpoint: process.env.RP_ENDPOINT,
@@ -142,10 +142,12 @@ const mocha = new Mocha({
 });
 
 // ======================================================
-// 7. APPLY JENKINS TEST CASE FILTER
+// 7. CONFIGURE TEST CASE FILTER
 // ======================================================
 
-const selectedTestCase = process.env.TEST_CASE_FILTER?.trim();
+const selectedTestCase = (
+    process.env.TEST_CASE_FILTER || ''
+).trim();
 
 const allowedTestCases = [
     'TC-API-DB-001',
@@ -158,16 +160,23 @@ const allowedTestCases = [
 
 if (selectedTestCase) {
 
+    // ==============================================
+    // VALIDATE SELECTED TEST CASE
+    // ==============================================
+
     if (!allowedTestCases.includes(selectedTestCase)) {
         throw new Error(
             `[FILTER ERROR] Test Case tidak dikenal: ${selectedTestCase}`
         );
     }
 
-    // Filter by exact test case ID in the test title.
-    mocha.grep(new RegExp(
-        `\\b${selectedTestCase}\\b`
-    ));
+    // ==============================================
+    // APPLY MOCHA TEST FILTER
+    // ==============================================
+
+    mocha.grep(
+        new RegExp(`\\b${selectedTestCase}\\b`)
+    );
 
     console.log(`[TEST FILTER] ${selectedTestCase}`);
 
@@ -199,10 +208,49 @@ for (const file of testFiles) {
 }
 
 // ======================================================
-// 10. EXECUTE REGRESSION
+// 10. VALIDATE MATCHED TEST CASES
+// ======================================================
+
+function validateMatchedTests() {
+
+    if (!selectedTestCase) {
+        return;
+    }
+
+    let matchedTests = 0;
+
+    mocha.suite.eachTest(test => {
+
+        if (test.fullTitle().includes(selectedTestCase)) {
+            matchedTests++;
+        }
+
+    });
+
+    if (matchedTests === 0) {
+        throw new Error(
+            `[FILTER ERROR] Tidak ditemukan test untuk ${selectedTestCase}.`
+        );
+    }
+
+    if (matchedTests > 1) {
+        throw new Error(
+            `[FILTER ERROR] ${selectedTestCase} cocok dengan ${matchedTests} test case.`
+        );
+    }
+
+    console.log(`[MATCHED TEST CASES] ${matchedTests}`);
+}
+
+// ======================================================
+// 11. EXECUTE REGRESSION
 // ======================================================
 
 async function main() {
+
+    // ==============================================
+    // DISPLAY EXECUTION CONFIGURATION
+    // ==============================================
 
     console.log('\n========== DUAL REPORTING ==========');
     console.log('[FRAMEWORK] Mocha + TypeScript');
@@ -212,41 +260,42 @@ async function main() {
     console.log('[REPORTERS] Mochawesome + ReportPortal');
     console.log(`[EXECUTION] ${executionEnvironment}`);
 
-    if (buildNumber && executionEnvironment === 'Jenkins') {
+    if (executionEnvironment === 'Jenkins' && buildNumber) {
         console.log(`[BUILD NUMBER] ${buildNumber}`);
     }
 
     console.log('====================================\n');
 
+    // ==============================================
+    // LOAD ALL TEST FILES
+    // ==============================================
+
     await mocha.loadFilesAsync();
 
-    // Reject a filter that matches zero tests.
-    // Otherwise Mocha could report success with 0 passing.
-    if (selectedTestCase) {
-        const rootSuite = mocha.suite;
-        let matchedTests = 0;
+    // ==============================================
+    // VALIDATE SELECTED TEST CASE
+    // ==============================================
 
-        rootSuite.eachTest(test => {
-            if (mocha._grep.test(test.fullTitle())) {
-                matchedTests++;
-            }
-        });
+    validateMatchedTests();
 
-        if (matchedTests === 0) {
-            throw new Error(
-                `[FILTER ERROR] Tidak ditemukan test untuk ${selectedTestCase}`
-            );
-        }
-
-        console.log(`[MATCHED TEST CASES] ${matchedTests}`);
-    }
+    // ==============================================
+    // RUN MOCHA + DUAL REPORTERS
+    // ==============================================
 
     mocha.run(failures => {
         process.exitCode = failures > 0 ? 1 : 0;
     });
 }
 
+// ======================================================
+// 12. ERROR HANDLING
+// ======================================================
+
 main().catch(error => {
-    console.error('[DUAL REPORT ERROR]', error.message);
+    console.error(
+        '[DUAL REPORT ERROR]',
+        error.message
+    );
+
     process.exitCode = 1;
 });
