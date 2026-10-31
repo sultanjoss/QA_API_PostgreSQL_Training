@@ -22,7 +22,7 @@ pipeline {
         // Check GitHub staging for changes every ~5 minutes
         pollSCM('H/5 * * * *')
 
-        // Nightly regression at 01:00 WIB
+        // Nightly regression at 21:00 WIB
         cron('TZ=Asia/Jakarta\n0 1 * * *')
     }
 
